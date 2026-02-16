@@ -1,0 +1,23 @@
+## Session 1 — 2026-02-16
+
+### Done
+- Project scaffold: Next.js 15 + Tailwind + TypeScript
+- Generated synthetic e-commerce dataset: 2000 orders, 25 products (4 categories), 200 customers
+  - Includes Superstrike 2 Wireless Mouse, Mousepad XL, USB-C Dongle
+  - Date range: last 90 days, skewed recent
+- Swapped Tinybird for ClickHouse Cloud (Tinybird Forward mode was incompatible with simple API usage)
+  - Host: westus3.azure.clickhouse.cloud
+  - Table `orders` created and populated (2000 rows verified)
+- All lib files stubbed: grammar.ts, openai.ts, clickhouse.ts, types.ts
+- Frontend page.tsx with query input + results table (not yet functional end-to-end)
+- Eval stubs for all 3 suites
+- Eval validation strategy: ClickHouse dry-run (not Python Lark parser)
+
+### Next
+- Feature 2: Update Lark grammar to match actual orders table schema
+- Feature 3: GPT-5 CFG integration (needs OPENAI_API_KEY)
+- Feature 4: Wire up ClickHouse execution in API route (client lib done)
+- Feature 5: Frontend should work end-to-end after 2-4
+
+### Blockers
+- Need OPENAI_API_KEY with GPT-5 access for Feature 3

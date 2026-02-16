@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSQL } from "@/lib/openai";
-import { executeQuery } from "@/lib/tinybird";
+import { executeQuery } from "@/lib/clickhouse";
 import type { QueryResponse } from "@/lib/types";
 
 export async function POST(req: NextRequest) {

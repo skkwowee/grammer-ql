@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clickhouse/client": "^1.17.0",
+    "dotenv": "^17.3.1",
     "next": "^15.1.0",
     "openai": "^4.77.0",
     "react": "^19.0.0",

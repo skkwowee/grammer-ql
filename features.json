@@ -2,14 +2,14 @@
   {
     "id": 1,
     "name": "Data ingestion",
-    "description": "Download e-commerce CSV dataset (1000+ rows) and ingest into Tinybird. Create a Tinybird data source and pipe for querying.",
-    "steps": ["Download dataset", "Create Tinybird data source", "Ingest CSV", "Create query pipe"],
-    "passes": false
+    "description": "Generate synthetic e-commerce CSV (2000 orders, 25 products including Superstrike 2 line) and ingest into ClickHouse Cloud.",
+    "steps": ["Generate dataset", "Create ClickHouse table", "Ingest CSV", "Verify row count"],
+    "passes": true
   },
   {
     "id": 2,
     "name": "CFG grammar definition",
-    "description": "Write a Lark grammar that describes valid ClickHouse SQL for the ingested table. Must support SELECT, WHERE, GROUP BY, ORDER BY, LIMIT, aggregate functions, date/interval arithmetic.",
+    "description": "Write a Lark grammar that describes valid ClickHouse SQL for the orders table. Must support SELECT, WHERE, GROUP BY, ORDER BY, LIMIT, aggregate functions, date/interval arithmetic.",
     "steps": ["Define grammar covering columns, aggregates, filters, date math", "Test grammar parses expected SQL strings"],
     "passes": false
   },
@@ -23,8 +23,8 @@
   {
     "id": 4,
     "name": "ClickHouse query execution",
-    "description": "Execute the generated SQL against Tinybird/ClickHouse and return results.",
-    "steps": ["Tinybird SQL API integration", "Result formatting", "Error handling for bad queries"],
+    "description": "Execute the generated SQL against ClickHouse Cloud and return results.",
+    "steps": ["ClickHouse HTTP API integration", "Result formatting", "Error handling for bad queries"],
     "passes": false
   },
   {
@@ -37,7 +37,7 @@
   {
     "id": 6,
     "name": "Eval 1: Syntactic validity",
-    "description": "Eval that generates SQL for 10+ natural language queries and verifies each parses as valid SQL / matches the CFG grammar.",
+    "description": "Eval that generates SQL for 10+ natural language queries and verifies each parses as valid SQL via ClickHouse dry-run.",
     "passes": false
   },
   {
