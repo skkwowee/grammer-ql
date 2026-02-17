@@ -7,28 +7,72 @@ function getClient() {
   return _openai;
 }
 
-const SYSTEM_PROMPT = `You are a precise, conservative SQL analyst working with a ClickHouse e-commerce database. You prioritize correctness over cleverness — when in doubt, you choose the simpler, more literal interpretation.
-
-TABLE: orders
-COLUMNS:
-- order_id (UInt32): unique identifier per order
-- customer_id (String): e.g. "CUST-0042"
-- customer_name (String): full name, e.g. "Emma Chen"
-- product_name (String): e.g. "Superstrike 2 Wireless Mouse"
-- category (String): one of "Electronics", "Home & Office", "Apparel", "Accessories"
-- quantity (UInt32): items purchased in this order (usually 1-4)
-- unit_price (Float64): price per item in USD
-- amount (Float64): total line amount (unit_price × quantity), in USD
-- order_date (DateTime): UTC timestamp
+// Universal reasoning — domain-agnostic, never changes
+const REASONING_PROMPT = `You are a precise, conservative SQL analyst working with a ClickHouse database. You prioritize correctness over cleverness — when in doubt, you choose the simpler, more literal interpretation.
 
 YOUR PRINCIPLES:
-- Favor the most common business interpretation. "Sales" and "revenue" mean money (amount), "volume" means units (quantity). When genuinely ambiguous, prefer the monetary interpretation.
+- Favor the most common business interpretation. "Sales" and "revenue" mean money, "volume" means units. When genuinely ambiguous, prefer the monetary interpretation.
 - Be precise with aggregation boundaries. Every non-aggregated column in SELECT must appear in GROUP BY. Never aggregate when the user wants individual rows.
 - Treat time as relative to now() unless the user gives absolute dates. "Recent" means ordered by recency. "Last N days" means a sliding window from the current moment.
 - Scope results appropriately. If the user asks for "top" or "best", always bound with LIMIT. If they don't specify N, default to 10.
-- Respect column semantics. amount already includes quantity — never multiply them together. category is a closed set — match it exactly, case-sensitive.
+- Never compute what's already computed. If a column represents a derived value, trust it.
 
 Return your query using the clickhouse_sql tool. Only SELECT queries.`;
+
+export interface ColumnSchema {
+  name: string;
+  type: string;
+  description: string;
+}
+
+export interface TableSchema {
+  name: string;
+  description: string;
+  columns: ColumnSchema[];
+  relationships?: string[];
+}
+
+function buildSchemaContext(schema: TableSchema[]): string {
+  return schema
+    .map((t) => {
+      const cols = t.columns
+        .map((c) => `- ${c.name} (${c.type}): ${c.description}`)
+        .join("\n");
+      const rels =
+        t.relationships?.length
+          ? `\nRELATIONSHIPS:\n${t.relationships.map((r) => `- ${r}`).join("\n")}`
+          : "";
+      return `TABLE: ${t.name}\n${t.description}\nCOLUMNS:\n${cols}${rels}`;
+    })
+    .join("\n\n");
+}
+
+// Current schema — single source of truth for table metadata
+const SCHEMA: TableSchema[] = [
+  {
+    name: "orders",
+    description: "E-commerce order line items",
+    columns: [
+      { name: "order_id", type: "UInt32", description: "unique identifier per order" },
+      { name: "customer_id", type: "String", description: 'e.g. "CUST-0042"' },
+      { name: "customer_name", type: "String", description: 'full name, e.g. "Emma Chen"' },
+      { name: "product_name", type: "String", description: 'e.g. "Superstrike 2 Wireless Mouse"' },
+      {
+        name: "category",
+        type: "String",
+        description: 'one of "Electronics", "Home & Office", "Apparel", "Accessories"',
+      },
+      { name: "quantity", type: "UInt32", description: "items purchased in this order (usually 1-4)" },
+      { name: "unit_price", type: "Float64", description: "price per item in USD" },
+      { name: "amount", type: "Float64", description: "total line amount (unit_price * quantity), in USD" },
+      { name: "order_date", type: "DateTime", description: "UTC timestamp" },
+    ],
+  },
+];
+
+function buildSystemPrompt(): string {
+  return REASONING_PROMPT + "\n\n" + buildSchemaContext(SCHEMA);
+}
 
 /**
  * Generate ClickHouse SQL from a natural language query using GPT-5's
@@ -41,7 +85,7 @@ export async function generateSQL(naturalLanguageQuery: string): Promise<string>
   const response = await (getClient() as any).responses.create({
     model: "gpt-5",
     input: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: buildSystemPrompt() },
       { role: "user", content: naturalLanguageQuery },
     ],
     text: { format: { type: "text" } },
