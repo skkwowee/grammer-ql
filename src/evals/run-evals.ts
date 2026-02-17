@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { runSyntacticEval } from "./syntactic";
 import { runSemanticEval } from "./semantic";
 import { runEdgeCaseEval } from "./edge-cases";
