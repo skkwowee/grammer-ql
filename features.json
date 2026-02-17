@@ -11,51 +11,51 @@
     "name": "CFG grammar definition",
     "description": "Write a Lark grammar that describes valid ClickHouse SQL for the orders table. Must support SELECT, WHERE, GROUP BY, ORDER BY, LIMIT, aggregate functions, date/interval arithmetic.",
     "steps": ["Define grammar covering columns, aggregates, filters, date math", "Test grammar parses expected SQL strings"],
-    "passes": false
+    "passes": true
   },
   {
     "id": 3,
     "name": "GPT-5 CFG integration",
     "description": "API route that takes natural language, calls GPT-5 with the Lark grammar as a custom tool, returns generated SQL.",
     "steps": ["OpenAI API call with custom tool type", "Extract SQL from tool call response", "Error handling"],
-    "passes": false
+    "passes": true
   },
   {
     "id": 4,
     "name": "ClickHouse query execution",
     "description": "Execute the generated SQL against ClickHouse Cloud and return results.",
     "steps": ["ClickHouse HTTP API integration", "Result formatting", "Error handling for bad queries"],
-    "passes": false
+    "passes": true
   },
   {
     "id": 5,
     "name": "Frontend UI",
     "description": "Simple web UI: text input for natural language query, submit button, results table, show generated SQL.",
     "steps": ["Input form", "Loading state", "Results table", "SQL display panel"],
-    "passes": false
+    "passes": true
   },
   {
     "id": 6,
     "name": "Eval 1: Syntactic validity",
     "description": "Eval that generates SQL for 10+ natural language queries and verifies each parses as valid SQL via ClickHouse dry-run.",
-    "passes": false
+    "passes": true
   },
   {
     "id": 7,
     "name": "Eval 2: Semantic correctness",
     "description": "Eval with 5+ queries where expected results are known. Run generated SQL, compare output to expected values.",
-    "passes": false
+    "passes": true
   },
   {
     "id": 8,
     "name": "Eval 3: Edge cases & robustness",
     "description": "Eval testing ambiguous queries, out-of-scope requests, date math edge cases. Verify graceful handling.",
-    "passes": false
+    "passes": true
   },
   {
     "id": 9,
     "name": "Deployment",
     "description": "Deploy to Vercel. Ensure env vars are configured and app is publicly accessible.",
-    "passes": false
+    "passes": true
   }
 ]

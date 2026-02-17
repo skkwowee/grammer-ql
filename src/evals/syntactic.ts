@@ -1,5 +1,6 @@
 import type { EvalResult, EvalCase } from "@/lib/types";
-// TODO: Import generateSQL and validate against the Lark grammar
+import { generateSQL } from "@/lib/openai";
+import { validateQuery } from "@/lib/clickhouse";
 
 const cases: EvalCase[] = [
   { name: "Simple count", naturalLanguage: "How many orders are there?" },
@@ -16,13 +17,19 @@ const cases: EvalCase[] = [
 ];
 
 /**
- * Eval 1: Generate SQL for each query and verify it parses as valid SQL.
- * TODO: Implement after Features 2-3 are complete.
+ * Eval 1: Generate SQL for each query and verify it passes ClickHouse EXPLAIN.
  */
 export async function runSyntacticEval(): Promise<EvalResult[]> {
-  return cases.map((c) => ({
-    name: c.name,
-    passed: false,
-    details: "Not implemented yet — complete Features 2-3 first",
-  }));
+  const results: EvalResult[] = [];
+  for (const c of cases) {
+    try {
+      const sql = await generateSQL(c.naturalLanguage);
+      await validateQuery(sql);
+      results.push({ name: c.name, passed: true, details: sql });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      results.push({ name: c.name, passed: false, details: msg });
+    }
+  }
+  return results;
 }

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Raindrop CFG",
-  description: "Natural language to ClickHouse SQL using GPT-5 Context Free Grammars",
+  title: "GrammarQL",
+  description: "Natural language to SQL with grammar-constrained generation",
 };
 
 export default function RootLayout({

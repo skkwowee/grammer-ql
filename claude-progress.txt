@@ -13,11 +13,32 @@
 - Eval stubs for all 3 suites
 - Eval validation strategy: ClickHouse dry-run (not Python Lark parser)
 
-### Next
-- Feature 2: Update Lark grammar to match actual orders table schema
-- Feature 3: GPT-5 CFG integration (needs OPENAI_API_KEY)
-- Feature 4: Wire up ClickHouse execution in API route (client lib done)
-- Feature 5: Frontend should work end-to-end after 2-4
+- Feature 2: Lark grammar verified — GPT-5 generates valid SQL constrained by it
+- Feature 3: GPT-5 CFG integration working via Responses API
+  - Switched from Chat Completions to `client.responses.create()` (required for custom tool type)
+  - Custom tool uses `type: "custom"` with `format: { type: "grammar", syntax: "lark" }`
+  - SQL extracted from `response.output[].input` where `type === "custom_tool_call"`
+  - Lazy-initialized OpenAI client for compatibility with standalone scripts
+  - Tested: COUNT, SUM with date filter, GROUP BY + ORDER BY + LIMIT all work
 
-### Blockers
-- Need OPENAI_API_KEY with GPT-5 access for Feature 3
+- Feature 4: ClickHouse query execution complete
+  - Added EXPLAIN dry-run validation before execution
+  - API route retries once on validation failure (regenerates SQL)
+  - Lazy-initialized ClickHouse client (matches openai.ts pattern)
+  - Error handling for missing env vars, validation failures, execution errors
+- Feature 5: Frontend working end-to-end
+  - All UI pieces were already built (input, loading, results table, SQL display)
+  - Tested via API: count, aggregation, grouping, error handling, injection all work
+
+- Feature 6-8: All eval suites implemented and passing (22/22)
+  - Syntactic: 11 NL queries → SQL → EXPLAIN validation
+  - Semantic: 5 queries with structural property checks (count=2000, sums, ordering, grouping)
+  - Edge cases: 6 tests (ambiguous, out-of-scope, empty, injection, date math, large numbers)
+- Feature 9: Deployed to Vercel
+  - URL: https://grammer-ql.vercel.app
+  - Switched ClickHouse client from @clickhouse/client to raw fetch (serverless-friendly)
+  - Updated openai SDK from v4 to v6 (v4 had connection issues in Vercel serverless)
+  - Added maxDuration=60 to API route for GPT-5 response time
+  - All 4 env vars configured in Vercel production
+
+### All 9 features complete

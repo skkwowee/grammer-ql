@@ -1,4 +1,4 @@
-# Raindrop CFG — Natural Language to ClickHouse SQL
+# GrammarQL — Natural Language to SQL with Grammar-Constrained Generation
 
 ## Tech Stack
 - **Next.js 15** (App Router) with TypeScript
@@ -10,8 +10,25 @@
 1. User types a natural language query in the frontend
 2. `POST /api/query` sends the query to GPT-5 with a Lark CFG grammar as a custom tool
 3. GPT-5 returns syntactically valid ClickHouse SQL (guaranteed by the grammar)
-4. The SQL is executed against ClickHouse Cloud
-5. Results are returned and displayed in a table
+4. The SQL is validated via ClickHouse `EXPLAIN` dry-run before execution
+5. The SQL is executed against ClickHouse Cloud
+6. Results are returned and displayed in a table
+
+### Why CFG?
+Traditional NL-to-SQL relies on prompt engineering alone — the LLM *usually* produces valid SQL, but there's no guarantee. CFG constrained decoding solves this at the token generation level: at each step, GPT-5 can only emit tokens that lead to a valid derivation in the grammar. The output is syntactically valid **by construction**.
+
+The grammar defines:
+- **What tables/columns exist** (prevents hallucinated schema references)
+- **Valid SQL syntax** (SELECT, WHERE, GROUP BY, ORDER BY, etc.)
+- **Allowed functions and operators** (aggregates, date arithmetic, comparisons)
+
+### Scaling Beyond One Table
+CFG guarantees **syntactic** validity, but not **semantic** validity across tables (e.g. "this column belongs to that table" is a context-sensitive constraint). For multi-table scenarios:
+- **Dynamic grammar generation**: query `system.columns` at runtime, template column/table names into the grammar automatically
+- **Execution-time validation**: `EXPLAIN` dry-run catches semantic errors the grammar can't express
+- **Retry with error context**: if validation fails, feed the error back to GPT-5 and regenerate under the same CFG constraint
+
+This two-layer approach (CFG for syntax + EXPLAIN for semantics) provides defense in depth.
 
 ## Running
 ```bash
@@ -43,10 +60,10 @@ npx tsx src/evals/run-evals.ts
 
 ## Project Structure
 - `src/app/page.tsx` — Main UI (query input + results table)
-- `src/app/api/query/route.ts` — API route: NL → SQL → execute → return
+- `src/app/api/query/route.ts` — API route: NL → SQL → validate → execute → return
 - `src/lib/grammar.ts` — Lark CFG grammar definition
 - `src/lib/openai.ts` — GPT-5 CFG call wrapper
-- `src/lib/clickhouse.ts` — ClickHouse query execution
+- `src/lib/clickhouse.ts` — ClickHouse query execution + validation
 - `src/evals/` — 3 eval suites + runner
 - `features.json` — Feature tracking (update `passes` as features are completed)
 - `claude-progress.txt` — Session progress log
@@ -55,5 +72,5 @@ npx tsx src/evals/run-evals.ts
 - TypeScript strict mode
 - Server components by default; `"use client"` only when needed
 - Keep files small and focused
-- No unnecessary abstractions — this is a take-home, not a production app
+- No unnecessary abstractions
 - Error messages should be user-friendly in the UI, detailed in the console
